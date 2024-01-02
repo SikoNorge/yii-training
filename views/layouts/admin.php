@@ -75,7 +75,6 @@ AppAsset::register($this);
 <footer class="footer mt-auto py-3 text-muted">
     <div class="container">
         <p class="float-left">&copy; Result Portal <?= date('Y') ?></p>
-        <p class="float-right"><a href="https://mrfola.hashnode.dev/">Powered By Mr Fola</a></p>
     </div>
 </footer>
 

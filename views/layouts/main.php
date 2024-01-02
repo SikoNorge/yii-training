@@ -73,7 +73,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         'method' => 'get',
         'options' => ['class' => 'navbar-form navbar-left']
     ]);
-    echo $form->field($searchModel, 'name')->textInput(['placeholder' => 'Search'])->label(false);
+    //echo $form->field($searchModel, 'name')->textInput(['placeholder' => 'Search'])->label(false);
     ActiveForm::end();
 
     NavBar::end();
