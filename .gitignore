@@ -35,9 +35,5 @@ tests/_support/_generated
 #vagrant folder
 /.vagrant
 
-#mysql private key
-mysql/ca-key.pem
-
-#mysql client key
-
-mysql/client-key.pem
+#mysq folder
+/mysql
