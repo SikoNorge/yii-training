@@ -9,7 +9,6 @@ use yii\bootstrap5\ActiveForm;
 UserChartAsset::register($this);
 
 /** @var yii\web\View $this */
-/** @var app\models\ProfileSearch $searchModel */
 /** @var yii\widgets\ActiveForm $form */
 
 
@@ -22,6 +21,20 @@ $profileError = $session->getFlash('profileError');
 if (isset($profileError)) {
     echo "<div class='alert alert-danger' role='alert'>".$profileError."</div>";
 }
+
+
+$this->registerJs("
+        $(document).ready(function() {
+        $('#post-form').click(function() {
+            // Überprüfen, ob der Benutzer angemeldet ist (hier ein Beispiel, du kannst es an deine Bedürfnisse anpassen)
+            var isLoggedIn = " . (Yii::$app->user->isGuest ? 'false' : 'true') . ";
+            if (!isLoggedIn) {
+                $('#loginErrorModal').modal('show'); // Zeige das Modal an
+                // Oder du könntest stattdessen eine benutzerdefinierte Fehlermeldung anzeigen oder andere Aktionen ausführen
+            }
+        });
+    });
+        ");
 
 
 ?>
@@ -107,9 +120,71 @@ if (isset($profileError)) {
                 <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/doc/">Yii Documentation &raquo;</a></p>
             </div>
             <div class="col-lg-4 mb-3">
+                <h2>Poste etwas</h2>
+
+                <p><?php
+                    $form = ActiveForm::begin([
+                        'id' => 'post-form',
+                        'options' => ['class'=>'form-horizontal'],
+                        'enableClientValidation' => true,
+                    ]);
+
+                    // Content input feld mit anzeige der zeichenanzahl
+                    ?>
+                <div style="position:relative;">
+                    <?= Html::activeTextarea($postModel, 'content', ['class' => 'form-control', 'rows' => 6, 'maxlength' => 160]) ?>
+                    <span id="charCount" style="position:absolute; bottom:0; right:0;"></span>
+                </div>
+                <p></p>
+                    <?php
+                    echo Html::submitButton('Post', ['class' => 'btn btn-primary']);
+
+                    ActiveForm::end();
+                    ?>
+                </p>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const contentField = document.getElementById('<?= Html::getInputId($postModel, 'content') ?>');
+                        const charCount = document.getElementById('charCount');
+
+                        contentField.addEventListener('input', function() {
+                            charCount.textContent = `${this.value.length}/160`;
+                            // Ändere die Hintergrundfarbe, wenn die Hälfte der Zeichen erreicht ist
+                            if (this.value.length >= 80) {
+                                charCount.style.color = 'darkorange';
+                                if (this.value.length >= 140) {
+                                    charCount.style.color = 'red';
+                            }
+                            } else {
+                                charCount.style.color = ''; // Zurücksetzen auf Standard-Hintergrundfarbe
+                            }
+                        });
+                    });
+                </script>
+
+                <div class="modal fade" id="loginErrorModal" tabindex="-1" aria-labelledby="loginErrorModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="loginErrorModalLabel">Fehlermeldung</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                Du musst angemeldet sein, um Posts zu erstellen!
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!--<div class="col-lg-4 mb-3">
                 <h2>Nach Usern suchen</h2>
 
-                <p><?php /*
+                <p><?php /* //TODO Suchleiste checken
                     $form = ActiveForm::begin([
                         'method' => 'post',
                         'action' => ['site/index'],
@@ -122,7 +197,7 @@ if (isset($profileError)) {
                 </p>
 
                 <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/forum/">Yii Forum &raquo;</a></p>
-            </div>
+            </div> !-->
             <div class="col-lg-4">
                 <h2>Besuche nach Benutzern</h2>
 

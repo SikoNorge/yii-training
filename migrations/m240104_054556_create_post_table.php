@@ -19,6 +19,15 @@ class m240104_054556_create_post_table extends Migration
             'created_at' => $this->dateTime(),
             'updated_at' => $this->dateTime(),
         ]);
+
+        $this->addForeignKey(
+            'fk-posts-user_id', // FK name
+            'posts', // Target table name
+            'user_id', // Column in current table
+            'users', // Target table's column
+            'id', // Target column
+            'CASCADE' // Optional: ON DELETE action
+        );
     }
 
     /**

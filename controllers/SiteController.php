@@ -2,7 +2,7 @@
 
 namespace app\controllers;
 
-use app\models\ProfileSearch;
+use app\models\Post;
 use app\models\User;
 use app\models\VisitModel;
 use Yii;
@@ -14,6 +14,8 @@ use yii\filters\VerbFilter;
 use app\models\ContactForm;
 use app\models\RegisterForm;
 use yii\data\ArrayDataProvider;
+use yii\web\NotFoundHttpException;
+
 
 
 
@@ -74,7 +76,22 @@ class SiteController extends Controller
         $userDataJson = json_encode($userData);
 
         $this->getView()->registerJs("var userData = {$userDataJson};", \yii\web\View::POS_HEAD);
-        return $this->render('index');
+
+        $postModel = new Post();
+        $postModel->user_id = Yii::$app->user->id;
+        // Abrufen des Inputs
+        if ($postModel->load(Yii::$app->request->post()) && $postModel->validate()) {
+            // Speichern des Inputs
+            if ($postModel->save()) {
+                // Weiterleitung zum Post
+                return $this->redirect(['site/view-post', 'id' => $postModel->id]);
+            } else {
+                Yii::$app->session->setFlash('error', 'Fehler beim Speichern des Posts.');
+            }
+        }
+        return $this->render('index',[
+            'postModel' => $postModel,
+        ]);
     }
 
     /**
@@ -235,6 +252,38 @@ class SiteController extends Controller
         return $this->render('search', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
+        ]);
+    }
+
+    // Fügt ein Post zur Tabelle Posts hinzu
+    public function actionNewPost()
+    {
+        $postModel = new Post();
+        // Abrufen des Inputs
+        if ($postModel->load(Yii::$app->request->post()) && $postModel->validate()) {
+            // Speichern des Inputs
+            if ($postModel->save()) {
+                // Weiterleitung zum Post
+                return $this->redirect(['site/view-post', 'id' => $postModel->id]);
+            } else {
+                Yii::$app->session->setFlash('error', 'Fehler beim Speichern des Posts.');
+            }
+        }
+        return $this->render('create', [
+            'postModel' => $postModel,
+        ]);
+    }
+
+    public function actionViewPost($id)
+    {
+        $model = Post::findOne($id);
+
+        if (!$model) {
+            throw new NotFoundHttpException('Der Post wurde nicht gefunden.');
+        }
+
+        return $this->render('view-post', [
+            'model' => $model,
         ]);
     }
 

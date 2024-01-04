@@ -24,6 +24,7 @@ $this->registerMetaTag(['name' => 'description', 'content' => $this->params['met
 $this->registerMetaTag(['name' => 'keywords', 'content' => $this->params['meta_keywords'] ?? '']);
 $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii::getAlias('@web/favicon.ico')]);
 
+// Form für den Logout Button, um ihn ins Dropdown Menü zu integrieren
 $logoutForm = Html::beginForm(['/site/logout'], 'post', ['class' => 'dropdown-item']);
 $logoutForm .= Html::submitButton(
     'Logout',
@@ -49,9 +50,7 @@ $logoutForm .= Html::endForm();
         'brandUrl' => Yii::$app->homeUrl,
         'options' => ['class' => 'navbar-expand-md navbar-dark bg-dark fixed-top']
     ]);
-    /*$profilePageItem = $profilePage
-    ? ['label'=>'Profile Page', 'url' => ['/profile/view', 'profile_id' => $profilePage->profile_id]]
-    : ['label' => 'Profile Page', 'url' => ['/profile/index']];*/
+
     // Dropdown Menü für den User
     $dropdownItems = [
             [
