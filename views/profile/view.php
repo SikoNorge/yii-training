@@ -6,6 +6,9 @@ use app\models\ProfilePage;
 
 /** @var yii\web\View $this */
 /** @var app\models\ProfilePage $model */
+/** @var app\models\ProfileSearch $searchModel */
+
+
 
 $basePath = 'imagesUpload/';
 $imagePath = $basePath . $model->profile_id;

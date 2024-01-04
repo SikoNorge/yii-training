@@ -185,14 +185,12 @@ class ProfileController extends Controller
 
         throw new NotFoundHttpException('The requested page does not exist.');
     }
-
-    public function actionSearch($name)
+    public function actionSearch($profile_id)
     {
 
-
         $searchModel = new ProfileSearch();
-        $dataProvider = $searchModel->search($name);
-        return $this->render('layouts/main', [
+        $dataProvider = $searchModel->search($profile_id);
+        return $this->render('view', [
             'searchModel'=> $searchModel,
             'dataProvider'=> $dataProvider,
         ]);

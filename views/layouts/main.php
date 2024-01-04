@@ -11,13 +11,11 @@ use yii\bootstrap5\Html;
 use yii\bootstrap5\Nav;
 use yii\bootstrap5\NavBar;
 use app\models\ProfilePage;
-use app\models\ProfileSearch;
 use yii\bootstrap5\ActiveForm;
+use yii\bootstrap5\Dropdown;
 
 AppAsset::register($this);
 $profilePage = ProfilePage::find()->where(['id'=>Yii::$app->user->id])->one();
-
-
 
 $this->registerCsrfMetaTags();
 $this->registerMetaTag(['charset' => Yii::$app->charset], 'charset');
@@ -25,6 +23,14 @@ $this->registerMetaTag(['name' => 'viewport', 'content' => 'width=device-width, 
 $this->registerMetaTag(['name' => 'description', 'content' => $this->params['meta_description'] ?? '']);
 $this->registerMetaTag(['name' => 'keywords', 'content' => $this->params['meta_keywords'] ?? '']);
 $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii::getAlias('@web/favicon.ico')]);
+
+$logoutForm = Html::beginForm(['/site/logout'], 'post', ['class' => 'dropdown-item']);
+$logoutForm .= Html::submitButton(
+    'Logout',
+    ['class' => 'btn']
+);
+$logoutForm .= Html::endForm();
+
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
@@ -43,38 +49,41 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         'brandUrl' => Yii::$app->homeUrl,
         'options' => ['class' => 'navbar-expand-md navbar-dark bg-dark fixed-top']
     ]);
-    $profilePageItem = $profilePage
+    /*$profilePageItem = $profilePage
     ? ['label'=>'Profile Page', 'url' => ['/profile/view', 'profile_id' => $profilePage->profile_id]]
-    : ['label' => 'Profile Page', 'url' => ['/profile/index']];
+    : ['label' => 'Profile Page', 'url' => ['/profile/index']];*/
+    // Dropdown Menü für den User
+    $dropdownItems = [
+            [
+                'label' => 'Profile page',
+                'url' => $profilePage
+                    ? ['/profile/view', 'profile_id' => $profilePage->profile_id]
+                    : ['/profile/index']
+            ],
+        ['label' => 'Notification', 'url' => ['/site/about']],
+        Yii::$app->user->isGuest
+            ? ['label' => 'Login', 'url' => ['/site/login']] // Wenn Gast, zeige Login-Link im Dropdown
+            : $logoutForm
+    ];
+
     echo Nav::widget([
         'options' => ['class' => 'navbar-nav'],
         'items' => [
             ['label' => 'Home', 'url' => ['/site/index']],
             ['label' => 'About', 'url' => ['/site/about']],
             ['label' => 'Contact', 'url' => ['/site/contact']],
-            $profilePageItem,
             Yii::$app->user->isGuest ? ['label' => 'Register', 'url' => ['/site/register']] : "",
             Yii::$app->user->identity &&( Yii::$app->user->identity->user_type === 'admin' || Yii::$app->user->identity->user_type === 'admin_guest') ? ['label' => 'Admin Page', 'url' => ['/admin']] : "",
             Yii::$app->user->isGuest
                 ? ['label' => 'Login', 'url' => ['/site/login']]
-                : '<li class="nav-item">'
-                    . Html::beginForm(['/site/logout'])
-                    . Html::submitButton(
-                        'Logout (' . Yii::$app->user->identity->name . ')',
-                        ['class' => 'nav-link btn btn-link logout']
-                    )
-                    . Html::endForm()
-                    . '</li>'
+                : [
+                        'label' => Yii::$app->user->identity->name,
+                        'items' => $dropdownItems,
+            ],
+
         ]
     ]);
 
-    $form = ActiveForm::begin([
-        'action' => ['profile/search'],
-        'method' => 'get',
-        'options' => ['class' => 'navbar-form navbar-left']
-    ]);
-    //echo $form->field($searchModel, 'name')->textInput(['placeholder' => 'Search'])->label(false);
-    ActiveForm::end();
 
     NavBar::end();
     ?>

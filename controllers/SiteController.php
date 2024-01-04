@@ -67,15 +67,13 @@ class SiteController extends Controller
      *
      * @return string
      */
-    public function actionIndex()
+    public function actionIndex() //TODO Suchleiste
     {
 
         $userData = VisitModel::getUserVisitCount();
         $userDataJson = json_encode($userData);
 
         $this->getView()->registerJs("var userData = {$userDataJson};", \yii\web\View::POS_HEAD);
-
-
         return $this->render('index');
     }
 
@@ -219,17 +217,25 @@ class SiteController extends Controller
         return $userName;
     }
 
-    public function actionSearch()
+    public function actionSearch()  //TODO Suchleiste
     {
-        $name = Yii::$app->request->get('name');
-
         $searchModel = new ProfileSearch();
-        $dataProvider = $searchModel->search($name);
+        $dataProvider = null;
+
+        if (Yii::$app->request->isPost) {
+            $searchModel->load(Yii::$app->request->post());
+            $dataProvider = $searchModel->search();
+            if ($dataProvider->totalCount > 0) {
+                $firstProfile = $dataProvider->getModels()[0];
+                return $this->redirect(['profile/view', 'id' => $firstProfile->profile_id]);
+            }
+        }
+
+        // Du kannst hier eine separate View für die Suche verwenden oder zur Index-View zurückkehren
         return $this->render('search', [
-            'searchModel'=> $searchModel,
-            'dataProvider'=> $dataProvider,
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
         ]);
     }
-
 
 }

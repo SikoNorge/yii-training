@@ -17,7 +17,6 @@ use yii\web\UploadedFile;
  * @property string $profile_title
  * @property string|null $updated_at
  *
-
  */
 
 class ProfilePage extends ActiveRecord
