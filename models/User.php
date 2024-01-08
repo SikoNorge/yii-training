@@ -151,11 +151,15 @@ class User extends ActiveRecord implements IdentityInterface
         }
     }
 
+    // Verbindungen zwischen den Tabellen
     public function getProfilePage()
     {
         return $this->hasOne(ProfilePage::className(), ['id'=>'id']);
     }
 
-
+    public function getPosts()
+    {
+        return $this->hasMany(Post::className(), ['user_id' => 'id']);
+    }
 
 }

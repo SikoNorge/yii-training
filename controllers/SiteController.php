@@ -3,10 +3,12 @@
 namespace app\controllers;
 
 use app\models\Post;
+use app\models\ProfilePage;
 use app\models\User;
 use app\models\VisitModel;
 use Yii;
 use yii\base\Action;
+use yii\db\Expression;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\Response;
@@ -222,6 +224,16 @@ class SiteController extends Controller
             ->all();
 
         return $users;
+    }
+
+    public function actionAllUser()
+    {
+        $allUser = User::find()
+            ->where(['id'=>ProfilePage::find()->select('id')])
+            ->orderBy(new Expression('RAND()'))
+            ->asArray()
+            ->all();
+        return $allUser;
     }
 
     public function actionUserNames()

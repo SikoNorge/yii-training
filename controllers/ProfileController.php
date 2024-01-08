@@ -3,7 +3,8 @@
 namespace app\controllers;
 
 use app\models\ProfilePage;
-use app\models\ProfileSearch;
+use app\models\User;
+use app\models\Post;
 use app\models\VisitModel;
 use yii\data\ActiveDataProvider;
 use yii\web\Controller;
@@ -84,10 +85,18 @@ class ProfileController extends Controller
         // Zählt die Anzahl der Einträge für das Profil
         $visitCount = VisitModel::find()->where(['profile_id'=>$profile_id])->count();
 
+        $newUserId = ProfilePage::find()->where(['profile_id'=>$profile_id])->one();
+        // Abrufen der Posts nach Nutzer
+        $userPosts = Post::find()->where(['user_id'=> $newUserId->id])->all();
+        if (!$userPosts)
+        {
+            $userPosts = [];
+        }
         // Schickt die gesammelten Daten an das View von Profil
         return $this->render('view', [
             'model' => $this->findModel($profile_id),
             'visitCount'=> $visitCount,
+            'userPosts' => $userPosts,
         ]);
     }
 
