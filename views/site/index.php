@@ -4,15 +4,19 @@ use app\models\ProfilePage;
 use app\models\VisitModel;
 use app\assets\UserChartAsset;
 use yii\bootstrap5\ActiveForm;
+use app\assets\AppAsset;
 
 
 UserChartAsset::register($this);
+
+
 
 /** @var yii\web\View $this */
 /** @var yii\widgets\ActiveForm $form */
 
 
 $users = $this->context->actionUsersCreatedAt();
+$allUser = $this->context->actionAllUser();
 $this->title = 'My Yii Application';
 
 
@@ -38,15 +42,142 @@ $this->registerJs("
 
 
 ?>
+<?php //TODO STYLE IN CSS HINZUFÜGEN ?>
+<style>
+    .carousel-control-prev-icon {
+        background-color: black;
+        border-radius: 50%;
+    }
+
+    .carousel-control-next-icon {
+        background-color: black;
+        border-radius: 50%;
+    }
+    .carousel-control-prev {
+        left: -5%; /* Position des linken Pfeils außerhalb des Carousels */
+    }
+
+    .carousel-control-next {
+        right: -5%; /* Position des rechten Pfeils außerhalb des Carousels */
+    }
+    #user-carousel {
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 2%;
+        box-shadow: 2px 2px 5px 2px rgba(0,0,0,0.5);
+    }
+
+    .carousel-inner {
+        position: relative;
+        padding-bottom: 1%;
+        padding-top: 1%;
+    }
+
+    .blurry-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("/img/newsletter-1.jpg");
+        filter: blur(5px);
+        z-index: -1;
+    }
+
+</style>
+
 <div class="site-index">
+    <h4 class="display-6 text-center">Random User</h4>
+    <!-- User display of random user -->
+    <div id="user-carousel" class="carousel slide" data-bs-slide="carousel">
+    <div class="carousel-inner">
+        <div class="blurry-background"></div>
+        <?php $itemCount = 0; ?>
+        <div class="carousel-item active">
+            <div class="row">
+            <?php foreach ($allUser as $index => $user) :?>
+                <div class="col d-flex flex-column align-items-center">
+            <?php
+            $profilePage = ProfilePage::find()->where(['id' => $user['id']])->one();
+            $basePath = 'imagesUpload/';
+            $imagePath = $basePath . ($profilePage ? $profilePage->profile_id : '');
 
-    <div class="jumbotron text-center bg-transparent mt-5 mb-5">
-        <h1 class="display-4">Congratulations!</h1>
+            $imageFormats = ['jpg', 'png']; // Unterstützte Bildformate
 
-        <p class="lead">You have successfully created your Yii-powered application.</p>
+            $imageFound = false;
+            foreach ($imageFormats as $format) {
+                $fullImagePath = $imagePath . '.' . $format;
+                if (file_exists($fullImagePath)) {
+                    $imageFound = true;
+                    $imageExtension = $format;
+                    break;
+                }
+            }
 
-        <p><a class="btn btn-lg btn-success" href="https://www.yiiframework.com">Get started with Yii</a></p>
+            if ($profilePage && $imageFound) {
+                // Bild gefunden, zeige es an
+                echo Html::a(
+                    Html::img(
+                        $imagePath . '.' . $imageExtension,
+                        [
+                            'class' => 'd-block object-fit-cover',
+                            'style' => ' width: 100px; height: 100px; border-radius: 50%; box-shadow: 2px 2px 5px rgba(0,0,0,0.5);'
+                        ]
+                    ),
+                    ['profile/view', 'profile_id' => $profilePage->profile_id]
+                );
+            } else {
+                // Kein Bild gefunden oder Profil nicht vorhanden, zeige ein Platzhalterbild an
+                echo Html::a(
+                    Html::img(
+                        'imagesUpload/platzhalter.png',
+                        [
+                            'alt' => 'Platzhalterbild',
+                            'class' => 'd-block object-fit-cover',
+                            'style' => ' width: 100px; height: 100px; border-radius: 50%; box-shadow: 2px 2px 5px rgba(0,0,0,0.5);'
+                        ]
+                    ),
+                    ['profile/view', 'profile_id' => $profilePage->profile_id]
+                );
+            }
+
+            // Zeige den Namen des Benutzers als Link zur Profilseite
+            if ($profilePage) {
+                $profileId = $profilePage->profile_id;
+                echo Html::a(
+                    Html::encode($user['name']),
+                    ['profile/view', 'profile_id' => $profileId],
+                    ['style' => 'display: block; margin-top: 10px; color: white; text-shadow: 2px 2px 5px rgba(0,0,0,0.5);']
+                );
+            } else {
+                echo Html::encode($user['name']);
+            }
+            ?>
+            </div>
+                <?php $itemCount++; ?>
+                <?php if (($index + 1) % 5 === 0) : ?>
+            </div>
+        </div>
+        <div class="carousel-item<?= $index === 0 ? ' active' : '' ?>">
+            <div class="row">
+                <?php endif; ?>
+        <?php endforeach; ?>
     </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#user-carousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#user-carousel" data-bs-slide="next" id="nextButton">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+    </div>
+    </div>
+
+
+    <!-- Carousel Controls -->
+
 
     <div class="body-content">
 
@@ -213,6 +344,11 @@ $this->registerJs("
                 </p>
             </div>
         </div>
-
     </div>
+        <script>
+            document.getElementById('nextButton').addEventListener('click', function () {
+                let carousel = new bootstrap.Carousel(document.getElementById('user-carousel'));
+                carousel.next();
+            });
+        </script>
 </div>

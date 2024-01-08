@@ -6,9 +6,9 @@ use app\models\ProfilePage;
 
 /** @var yii\web\View $this */
 /** @var app\models\ProfilePage $model */
-/** @var app\models\ProfileSearch $searchModel */
 
-
+// Fügt eine CSS Datei hinzu
+$this->registerCssFile('@web/css/post.css');
 
 $basePath = 'imagesUpload/';
 $imagePath = $basePath . $model->profile_id;
@@ -78,6 +78,20 @@ $this->params['breadcrumbs'][] = $this->title;
         <?= Html::encode(date('d.m.Y', strtotime($model->updated_at)))?>
         </a>
     </div>
-
-
-</div>
+    <div class="row">
+        <div class="col-md-3">
+            <div class="posts-box">
+                <h4>Posts</h4>
+                <?php foreach ($userPosts as $post): ?>
+                    <div class="post-box">
+                        <div class="post">
+                            <p><?= $post->content ?></p>
+                            <div class="post-date">
+                                <?= date('d.m.Y', strtotime($post->created_at)) //TODO Hinzufügen von einer funktion, womit Post erst beim runterscrollen geladen werden?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
