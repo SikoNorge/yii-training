@@ -91,7 +91,8 @@ $this->registerJs("
     <!-- User display of random user -->
     <div id="user-carousel" class="carousel slide" data-bs-slide="carousel">
     <div class="carousel-inner">
-        <div class="blurry-background"></div>
+        <div id="parentContainer">
+        <div class="blurry-background" id="blurryBackground"></div>
         <?php $itemCount = 0; ?>
         <div class="carousel-item active">
             <div class="row">
@@ -164,6 +165,8 @@ $this->registerJs("
         <?php endforeach; ?>
     </div>
         </div>
+        </div>
+        <!-- Carousel Controls -->
         <button class="carousel-control-prev" type="button" data-bs-target="#user-carousel" data-bs-slide="prev">
             <span class="carousel-control-prev-icon" aria-hidden="true"></span>
             <span class="visually-hidden">Previous</span>
@@ -175,8 +178,6 @@ $this->registerJs("
     </div>
     </div>
 
-
-    <!-- Carousel Controls -->
 
 
     <div class="body-content">
@@ -350,5 +351,37 @@ $this->registerJs("
                 let carousel = new bootstrap.Carousel(document.getElementById('user-carousel'));
                 carousel.next();
             });
+
+
+
+            const parentContainer = document.getElementById('parentContainer');
+            const blurryBackground = document.getElementById('blurryBackground');
+
+            // Event Listener hinzufügen, um die Maus zu überwachen
+            parentContainer.addEventListener('mouseenter', () => {
+                document.addEventListener('mousemove', onMouseMove);
+            });
+
+            // Event Listener, um das Bewegen des Bildes zu stoppen, wenn die Maus den Container verlässt
+            parentContainer.addEventListener('mouseleave', () => {
+                document.removeEventListener('mousemove', onMouseMove);
+                resetBackgroundPosition();
+            });
+
+            // Funktion zum Bewegen des Hintergrundbildes relativ zur Mausposition
+            function onMouseMove(event) {
+                console.log('Mouse moved');
+                const xPos = event.clientX / window.innerWidth;
+                const yPos = event.clientY / window.innerHeight;
+
+                blurryBackground.style.backgroundPositionX = `${xPos * 25}%`;
+                blurryBackground.style.backgroundPositionY = `${yPos * 5}%`;
+            }
+            // Funktion zum Zurücksetzen der Hintergrundbildposition
+            function resetBackgroundPosition() {
+                parentContainer.style.backgroundPositionX = 'initial';
+                parentContainer.style.backgroundPositionY = 'initial';
+            }
+
         </script>
 </div>
