@@ -28,6 +28,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?= DetailView::widget([
         'model' => $model,
+        'options' => ['class' => 'table table-bordered detail-view', 'style' => 'color: white;'], // Ändere die Farbe des gesamten DetailViews
         'attributes' => [
             'id',
             'name',
@@ -38,6 +39,8 @@ $this->params['breadcrumbs'][] = $this->title;
             'created_at',
             'updated_at',
         ],
+        'template' => '<tr><th{captionOptions}>{label}</th><td{contentOptions}>{value}</td></tr>', // Ändere die Farbe der einzelnen Zellen
     ]) ?>
+
 
 </div>

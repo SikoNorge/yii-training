@@ -1,0 +1,30 @@
+.custom-header-cell {
+    color: black; /* Textfarbe der Header-Zellen ändern */
+    background: lightgrey;
+}
+
+
+.card-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    border: 1px solid #ccc;
+    padding: 20px;
+    /* Feste Höhe für die Karten */
+    height: 200px;
+    /* Textumbruch erzwingen */
+    overflow-wrap: break-word;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 33%;
+    z-index: 1;
+    cursor: pointer;
+}

@@ -51,11 +51,15 @@ class AdminController extends Controller
 
     public function beforeAction($action)
     {
-        if (Yii::$app->user->isGuest || Yii::$app->user->identity->user_type !== 'admin' || Yii::$app->user->identity->user_type === 'admin_guest')
-        {
+        if (Yii::$app->user->isGuest) {
             throw new ForbiddenHttpException('Du hast keine Berechtigung diese seite zu sehen');
         }
-        return parent::beforeAction($action);
+
+        if (Yii::$app->user->identity->user_type === 'admin' || Yii::$app->user->identity->user_type === 'admin_guest') {
+            return parent::beforeAction($action);
+        }
+
+        throw new ForbiddenHttpException('Du hast keine Berechtigung diese seite zu sehen');
     }
 
     /**

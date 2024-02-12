@@ -16,7 +16,7 @@ class post extends ActiveRecord
     {
         return [
             [['user_id', 'content'], 'required'],
-            ['content', 'string', 'max' => 280], // Beispiel: Maximal 280 Zeichen
+            ['content', 'string', 'max' => 160], // Beispiel: Maximal 160 Zeichen
         ];
     }
 
@@ -31,6 +31,11 @@ class post extends ActiveRecord
                 'value' => new Expression('NOW()'),
             ],
         ];
+    }
+
+    public function getUser()
+    {
+        return $this->hasOne(User::className(), ['id' => 'user_id']);
     }
 
 }

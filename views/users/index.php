@@ -8,7 +8,6 @@ use yii\grid\GridView;
 
 /** @var yii\web\View $this */
 /** @var app\models\UserSearch $searchModel */
-/** @var app\models\ProfileSearch $searchModel */
 /** @var yii\data\ActiveDataProvider $dataProvider */
 
 $this->title = 'Users';
@@ -27,24 +26,38 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
+        'options' => ['style' => 'color: white;'], // Dies ändert die Farbe des gesamten GridViews
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
 
-            'id',
-            'name',
-            'email:email',
-            'user_type',
-            //'auth_key',
-            //'created_at',
-            //'updated_at',
+            // Hier kommen die restlichen Spaltendefinitionen
+            [
+                'attribute' => 'id',
+                'contentOptions' => ['style' => 'color: white;'], // Ändere die Farbe dieser speziellen Spalte
+            ],
+            [
+                'attribute' => 'name',
+                'contentOptions' => ['style' => 'color: white;'], // Ändere die Farbe dieser speziellen Spalte
+            ],
+            [
+                'attribute' => 'email',
+                'contentOptions' => ['style' => 'color: white;'], // Ändere die Farbe dieser speziellen Spalte
+            ],
+            [
+                'attribute' => 'user_type',
+                'contentOptions' => ['style' => 'color: white;'], // Ändere die Farbe dieser speziellen Spalte
+            ],
+
             [
                 'class' => ActionColumn::className(),
-                'urlCreator' => function ($action, User $model, $key, $index, $column) {
+                'urlCreator' => function ($action, User $model) {
                     return Url::toRoute([$action, 'id' => $model->id]);
-                 }
+                },
+                'contentOptions' => ['style' => 'color: white;'], // Ändere die Farbe dieser speziellen Spalte
             ],
         ],
     ]); ?>
+
 
 
 </div>

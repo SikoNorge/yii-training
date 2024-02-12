@@ -71,7 +71,7 @@ class SiteController extends Controller
      *
      * @return string
      */
-    public function actionIndex() //TODO Suchleiste
+    public function actionIndex()
     {
 
         $userData = VisitModel::getUserVisitCount();
@@ -86,7 +86,8 @@ class SiteController extends Controller
             // Speichern des Inputs
             if ($postModel->save()) {
                 // Weiterleitung zum Post
-                return $this->redirect(['site/view-post', 'id' => $postModel->id]);
+                Yii::$app->session->setFlash('postSuccess', true);
+                return $this->redirect(['index']);
             } else {
                 Yii::$app->session->setFlash('error', 'Fehler beim Speichern des Posts.');
             }
@@ -214,7 +215,7 @@ class SiteController extends Controller
         return $this->render('about');
     }
 
-    public function actionUsersCreatedAt()
+    public function getUsersCreatedAt()
     {
         $users = User::find()
             ->select(['name', 'id'])
@@ -226,12 +227,13 @@ class SiteController extends Controller
         return $users;
     }
 
-    public function actionAllUser()
+    public function getAllUser()
     {
         $allUser = User::find()
             ->where(['id'=>ProfilePage::find()->select('id')])
             ->orderBy(new Expression('RAND()'))
-            ->asArray()
+            ->with('profilePage')
+            //->asArray()
             ->all();
         return $allUser;
     }
@@ -244,59 +246,6 @@ class SiteController extends Controller
             ->all();
 
         return $userName;
-    }
-
-    public function actionSearch()  //TODO Suchleiste
-    {
-        $searchModel = new ProfileSearch();
-        $dataProvider = null;
-
-        if (Yii::$app->request->isPost) {
-            $searchModel->load(Yii::$app->request->post());
-            $dataProvider = $searchModel->search();
-            if ($dataProvider->totalCount > 0) {
-                $firstProfile = $dataProvider->getModels()[0];
-                return $this->redirect(['profile/view', 'id' => $firstProfile->profile_id]);
-            }
-        }
-
-        // Du kannst hier eine separate View für die Suche verwenden oder zur Index-View zurückkehren
-        return $this->render('search', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-        ]);
-    }
-
-    // Fügt ein Post zur Tabelle Posts hinzu
-    public function actionNewPost()
-    {
-        $postModel = new Post();
-        // Abrufen des Inputs
-        if ($postModel->load(Yii::$app->request->post()) && $postModel->validate()) {
-            // Speichern des Inputs
-            if ($postModel->save()) {
-                // Weiterleitung zum Post
-                return $this->redirect(['site/view-post', 'id' => $postModel->id]);
-            } else {
-                Yii::$app->session->setFlash('error', 'Fehler beim Speichern des Posts.');
-            }
-        }
-        return $this->render('create', [
-            'postModel' => $postModel,
-        ]);
-    }
-
-    public function actionViewPost($id)
-    {
-        $model = Post::findOne($id);
-
-        if (!$model) {
-            throw new NotFoundHttpException('Der Post wurde nicht gefunden.');
-        }
-
-        return $this->render('view-post', [
-            'model' => $model,
-        ]);
     }
 
 }

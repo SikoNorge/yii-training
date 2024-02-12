@@ -9,6 +9,7 @@ class UserChartAsset extends AssetBundle
     public $baseUrl = '@web';
     public $js = [
         'assets/custom/userChart.js', // Passe den Pfad entsprechend an
+        'assets/custom/carouselNavigation.js',
     ];
     public $depends = [
         \yii\web\JqueryAsset::class,

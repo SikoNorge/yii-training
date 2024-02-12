@@ -3,7 +3,6 @@
 /** @var yii\web\View $this */
 /** @var string $content */
 
-
 use app\assets\AppAsset;
 use app\widgets\Alert;
 use yii\bootstrap5\Breadcrumbs;
@@ -11,11 +10,12 @@ use yii\bootstrap5\Html;
 use yii\bootstrap5\Nav;
 use yii\bootstrap5\NavBar;
 use app\models\ProfilePage;
-use yii\bootstrap5\ActiveForm;
-use yii\bootstrap5\Dropdown;
+
 
 AppAsset::register($this);
 $profilePage = ProfilePage::find()->where(['id'=>Yii::$app->user->id])->one();
+$this->registerCssFile('@web/css/dark-mode.css');
+$this->registerJsFile('https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js', ['integrity' => 'sha384-pzjw8t+ua/cac9iCtuRbRcG9MI8dD9I2QKkQdy9MnWl3HoMzPz8zW1WYUJlrtJq', 'crossorigin' => 'anonymous']);
 
 $this->registerCsrfMetaTags();
 $this->registerMetaTag(['charset' => Yii::$app->charset], 'charset');
@@ -65,12 +65,24 @@ $logoutForm .= Html::endForm();
             : $logoutForm
     ];
 
+    $dropdownItemsApi = [
+            [
+                    'label' => 'APIAdmin',
+                    'url' => ['/api/admin']
+            ],
+        [
+            'label' => 'APIClient',
+            'url' => ['/api/client']
+        ]
+    ];
+
     echo Nav::widget([
         'options' => ['class' => 'navbar-nav'],
         'items' => [
             ['label' => 'Home', 'url' => ['/site/index']],
             ['label' => 'About', 'url' => ['/site/about']],
             ['label' => 'Contact', 'url' => ['/site/contact']],
+            ['label' => 'finApi', 'items' => $dropdownItemsApi],
             Yii::$app->user->isGuest ? ['label' => 'Register', 'url' => ['/site/register']] : "",
             Yii::$app->user->identity &&( Yii::$app->user->identity->user_type === 'admin' || Yii::$app->user->identity->user_type === 'admin_guest') ? ['label' => 'Admin Page', 'url' => ['/admin']] : "",
             Yii::$app->user->isGuest
@@ -98,10 +110,10 @@ $logoutForm .= Html::endForm();
     </div>
 </main>
 
-<footer id="footer" class="mt-auto py-3 bg-light">
+<footer id="footer" class="mt-auto py-3">
     <div class="container">
         <div class="row text-muted">
-            <div class="col-md-6 text-center text-md-start">&copy; Nicus Sorgus <?= date('Y') ?></div>
+            <div class="col-md-6 text-center text-md-start">&copy; Siko Norge <?= date('Y') ?></div>
             <div class="col-md-6 text-center text-md-end"><?= Yii::powered() ?></div>
         </div>
     </div>

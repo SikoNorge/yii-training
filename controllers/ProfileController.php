@@ -12,10 +12,12 @@ use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use Yii;
+use yii\data\Pagination;
+use yii\web\Response;
+use yii\web\ResponseFormatterInterface;
 use yii\web\UploadedFile;
-use yii\httpclient\Client;
+use app\models\FollowModel;
 use yii\helpers\ArrayHelper;
-use yii\db\Query;
 
 
 /**
@@ -85,20 +87,79 @@ class ProfileController extends Controller
         // Zählt die Anzahl der Einträge für das Profil
         $visitCount = VisitModel::find()->where(['profile_id'=>$profile_id])->count();
 
-        $newUserId = ProfilePage::find()->where(['profile_id'=>$profile_id])->one();
-        // Abrufen der Posts nach Nutzer
-        $userPosts = Post::find()->where(['user_id'=> $newUserId->id])->all();
-        if (!$userPosts)
-        {
-            $userPosts = [];
-        }
+        $newUserId = ProfilePage::find()->select('id')->where(['profile_id'=>$profile_id])->one();
+        $pagination = new Pagination([
+            'defaultPageSize' => 5, // Anzahl der Posts pro Seite
+            'totalCount' => Post::find()->where(['user_id' => $newUserId->id])->count(), // Gesamtanzahl der Posts
+        ]);
+
+        $userPosts = Post::find()
+            ->where(['user_id' => $newUserId->id])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->offset($pagination->offset)
+            ->limit($pagination->limit)
+            ->all();
+
+        // Zähler für übrige Posts
+        $hasMorePosts = Post::find()
+            ->where(['user_id' => $newUserId->id])
+            ->offset($pagination->offset + $pagination->limit)
+            ->exists();
+
+        // Abrufen des Nutzernamens
+        $userName = User::findOne(['id'=>$newUserId]);
+
+        // Checkt, ob ein Follow bereits eingetragen ist
+        $checkFollow = FollowModel::find()->where(['following_id'=>$profile_id, 'follower_id'=>$userId])->one();
+
+        // Listet die Namen der followings des Users auf
+        $followingData = FollowModel::getFollowingName($newUserId);
+
+        $followingName = User::find()
+            ->select(['id', 'name', 'email'])
+            ->where(['id' => ArrayHelper::getColumn($followingData, 'id')])
+            ->with('profilePage')
+            ->all();
+
         // Schickt die gesammelten Daten an das View von Profil
         return $this->render('view', [
             'model' => $this->findModel($profile_id),
             'visitCount'=> $visitCount,
             'userPosts' => $userPosts,
+            'pagination' => $pagination,
+            'userName' => $userName['name'],
+            'checkFollow' => $checkFollow,
+            'followingName' => $followingName,
+            'hasMorePosts' => $hasMorePosts,
         ]);
     }
+
+    public function actionLoadPosts($page)
+    {
+
+        $profileId = Yii::$app->request->get('profile_id');
+        Yii::info('Load Posts action called. Page: ' . $page . ', Profile ID: ' . $profileId);
+        Yii::$app->response->format = Response::FORMAT_HTML;
+
+        $pageSize = 5; // Anzahl der Posts pro Seite
+        $offset = ($page) * $pageSize;
+
+        // Hier müsstest du $newUserId entsprechend initialisieren, z.B. aus dem Session- oder Request-Objekt
+        $newUserId = ProfilePage::find()->select('id')->where(['profile_id'=>$profileId])->scalar();
+
+        $userPosts = Post::find()
+            ->where(['user_id' => $newUserId])
+            ->orderBy(['created_at' => SORT_DESC]) // Sortiere nach Datum
+            ->offset($offset)
+            ->limit($pageSize)
+            ->all();
+
+        return $this->renderAjax('_postPartial', [
+            'userPosts' => $userPosts,
+        ]);
+    }
+
+
 
     /**
      * Creates a new ProfilePage model.
@@ -133,19 +194,23 @@ class ProfileController extends Controller
     {
         $model = $this->findModel($profile_id);
 
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            $model->imageFile = UploadedFile::getInstance($model, 'imageFile');
-            if (isset($model->imageFile)) {
-                if ($model->upload()) {
+        if($model->id == Yii::$app->user->id) {
+
+            if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
+                $model->imageFile = UploadedFile::getInstance($model, 'imageFile');
+                if (isset($model->imageFile)) {
+                    if ($model->upload()) {
+                        return $this->redirect(['view', 'profile_id' => $model->profile_id]);
+                    }
+                } else {
                     return $this->redirect(['view', 'profile_id' => $model->profile_id]);
                 }
-            } else {
-                return $this->redirect(['view', 'profile_id' => $model->profile_id]);
             }
+            return $this->render('update', [
+                'model' => $model,
+            ]);
         }
-        return $this->render('update', [
-            'model' => $model,
-        ]);
+        throw new NotFoundHttpException('Du darfst nur dein eigenes Profil bearbeiten.');
     }
 
     public function actionUpload($profile_id)
@@ -205,4 +270,22 @@ class ProfileController extends Controller
         ]);
     }
 
+    public function actionFollow($profile_id)
+    {
+        $followModel = new FollowModel();
+
+        // Hier wird der Follow Record hinzugefügt
+        $userId = Yii::$app->user->id;
+
+        $checkFollow = FollowModel::find()->where(['following_id'=>$profile_id, 'follower_id'=>$userId])->one();
+
+        if ($checkFollow)
+        {
+            FollowModel::removeFollow($profile_id, $userId);
+        } else {
+            FollowModel::recordFollow($profile_id, $userId);
+        }
+
+        return $this->redirect(['view', 'profile_id' => $profile_id]);
+    }
 }

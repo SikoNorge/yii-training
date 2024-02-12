@@ -33,7 +33,7 @@ use app\models\User;
              $visit = new VisitModel();
              $visit->profile_id = $profile_id;
              $visit->user_id = $userId;
-             $visit->save();
+             $visit->save(false);
          }
      }
 

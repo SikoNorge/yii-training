@@ -21,8 +21,10 @@ class AppAsset extends AssetBundle
     public $baseUrl = '@web';
     public $css = [
         'css/site.css',
+        'css/dark-mode.css',
     ];
     public $js = [
+        'assets/custom/loadPost.js'
     ];
     public $depends = [
         'yii\web\YiiAsset',

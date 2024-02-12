@@ -1,280 +1,200 @@
 <?php
+
+use yii\base\InvalidConfigException;
 use yii\helpers\Html;
 use app\models\ProfilePage;
-use app\models\VisitModel;
+use app\models\User;
 use app\assets\UserChartAsset;
 use yii\bootstrap5\ActiveForm;
 use app\assets\AppAsset;
+use yii\web\JqueryAsset;
 
-
+// Register CSS and JS assets
+AppAsset::register($this);
 UserChartAsset::register($this);
-
-
 
 /** @var yii\web\View $this */
 /** @var yii\widgets\ActiveForm $form */
 
+// Get user data
+$users = $this->context->getUsersCreatedAt();
+$allUser = $this->context->getAllUser();
 
-$users = $this->context->actionUsersCreatedAt();
-$allUser = $this->context->actionAllUser();
+// Set page title
 $this->title = 'My Yii Application';
 
-
+// Display error message for profile creation
 $session = Yii::$app->session;
 $profileError = $session->getFlash('profileError');
 if (isset($profileError)) {
     echo "<div class='alert alert-danger' role='alert'>".$profileError."</div>";
 }
 
-
+// JavaScript to check user login status before posting
 $this->registerJs("
-        $(document).ready(function() {
+    $(document).ready(function() {
         $('#post-form').click(function() {
-            // Überprüfen, ob der Benutzer angemeldet ist (hier ein Beispiel, du kannst es an deine Bedürfnisse anpassen)
             var isLoggedIn = " . (Yii::$app->user->isGuest ? 'false' : 'true') . ";
             if (!isLoggedIn) {
-                $('#loginErrorModal').modal('show'); // Zeige das Modal an
-                // Oder du könntest stattdessen eine benutzerdefinierte Fehlermeldung anzeigen oder andere Aktionen ausführen
+                $('#loginErrorModal').modal('show');
             }
         });
     });
-        ");
+");
 
+//Success modal für ein Post
+
+$postSuccess = Yii::$app->session->getFlash('postSuccess');
+if ($postSuccess) {
+    $this->registerJs("
+        $(document).ready(function() {
+            $('#postSuccessModal').modal('show');
+        });
+    ");
+}
 
 ?>
-<?php //TODO STYLE IN CSS HINZUFÜGEN ?>
-<style>
-    .carousel-control-prev-icon {
-        background-color: black;
-        border-radius: 50%;
-    }
-
-    .carousel-control-next-icon {
-        background-color: black;
-        border-radius: 50%;
-    }
-    .carousel-control-prev {
-        left: -5%; /* Position des linken Pfeils außerhalb des Carousels */
-    }
-
-    .carousel-control-next {
-        right: -5%; /* Position des rechten Pfeils außerhalb des Carousels */
-    }
-    #user-carousel {
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 2%;
-        box-shadow: 2px 2px 5px 2px rgba(0,0,0,0.5);
-    }
-
-    .carousel-inner {
-        position: relative;
-        padding-bottom: 1%;
-        padding-top: 1%;
-    }
-
-    .blurry-background {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-image: url("/img/newsletter-1.jpg");
-        filter: blur(5px);
-        z-index: -1;
-    }
-
-</style>
 
 <div class="site-index">
+    <!-- Random User Carousel -->
     <h4 class="display-6 text-center">Random User</h4>
-    <!-- User display of random user -->
     <div id="user-carousel" class="carousel slide" data-bs-slide="carousel">
-    <div class="carousel-inner">
-        <div id="parentContainer">
-        <div class="blurry-background" id="blurryBackground"></div>
-        <?php $itemCount = 0; ?>
-        <div class="carousel-item active">
-            <div class="row">
-            <?php foreach ($allUser as $index => $user) :?>
-                <div class="col d-flex flex-column align-items-center">
-            <?php
-            $profilePage = ProfilePage::find()->where(['id' => $user['id']])->one();
-            $basePath = 'imagesUpload/';
-            $imagePath = $basePath . ($profilePage ? $profilePage->profile_id : '');
+        <div class="carousel-inner">
+            <div id="parentContainer">
+                <div class="blurry-background" id="blurryBackground"></div>
+                <?php $itemCount = 0; ?>
+                <div class="carousel-item active">
+                    <div class="row">
+                        <?php foreach ($allUser as $index => $userData) : ?>
+                        <div class="col d-flex flex-column align-items-center">
+                            <?php
+                            // Display user profile image and name
+                            $userPage = $userData->profilePage;
+                            if ($userPage) {
+                                $profileImage = $userPage->getProfileImage();
+                                $profileId = $userPage->profile_id ?? null;
+                                echo Html::a(
+                                    Html::img(
+                                        $profileImage,
+                                        [
+                                            'class' => 'd-block object-fit-cover',
+                                            'style' => 'width: 100px; height: 100px; border-radius: 50%; box-shadow: 2px 2px 5px rgba(0,0,0,0.5);'
+                                        ]
+                                    ),
+                                    ['profile/view', 'profile_id' => $profileId]
+                                );
+                            }
+                            $userName = User::find()->where(['id' => $userData['id']])->one();
 
-            $imageFormats = ['jpg', 'png']; // Unterstützte Bildformate
-
-            $imageFound = false;
-            foreach ($imageFormats as $format) {
-                $fullImagePath = $imagePath . '.' . $format;
-                if (file_exists($fullImagePath)) {
-                    $imageFound = true;
-                    $imageExtension = $format;
-                    break;
-                }
-            }
-
-            if ($profilePage && $imageFound) {
-                // Bild gefunden, zeige es an
-                echo Html::a(
-                    Html::img(
-                        $imagePath . '.' . $imageExtension,
-                        [
-                            'class' => 'd-block object-fit-cover',
-                            'style' => ' width: 100px; height: 100px; border-radius: 50%; box-shadow: 2px 2px 5px rgba(0,0,0,0.5);'
-                        ]
-                    ),
-                    ['profile/view', 'profile_id' => $profilePage->profile_id]
-                );
-            } else {
-                // Kein Bild gefunden oder Profil nicht vorhanden, zeige ein Platzhalterbild an
-                echo Html::a(
-                    Html::img(
-                        'imagesUpload/platzhalter.png',
-                        [
-                            'alt' => 'Platzhalterbild',
-                            'class' => 'd-block object-fit-cover',
-                            'style' => ' width: 100px; height: 100px; border-radius: 50%; box-shadow: 2px 2px 5px rgba(0,0,0,0.5);'
-                        ]
-                    ),
-                    ['profile/view', 'profile_id' => $profilePage->profile_id]
-                );
-            }
-
-            // Zeige den Namen des Benutzers als Link zur Profilseite
-            if ($profilePage) {
-                $profileId = $profilePage->profile_id;
-                echo Html::a(
-                    Html::encode($user['name']),
-                    ['profile/view', 'profile_id' => $profileId],
-                    ['style' => 'display: block; margin-top: 10px; color: white; text-shadow: 2px 2px 5px rgba(0,0,0,0.5);']
-                );
-            } else {
-                echo Html::encode($user['name']);
-            }
-            ?>
+                            if ($userPage) {
+                                $profileId = $userPage->profile_id;
+                                echo Html::a(
+                                    Html::encode($userName['name']),
+                                    ['profile/view', 'profile_id' => $profileId],
+                                    ['style' => 'display: block; margin-top: 10px; color: white; text-shadow: 2px 2px 5px rgba(0,0,0,0.5);']
+                                );
+                            } else {
+                                echo Html::encode($userName['name']);
+                            }
+                            ?>
+                        </div>
+                        <?php $itemCount++; ?>
+                        <?php if (($index + 1) % 5 === 0) : ?>
+                    </div>
+                </div>
+                <div class="carousel-item<?= $index === 0 ? ' active' : '' ?>">
+                    <div class="row">
+                        <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
             </div>
-                <?php $itemCount++; ?>
-                <?php if (($index + 1) % 5 === 0) : ?>
-            </div>
+
+            <!-- Carousel Controls -->
+            <button class="carousel-control-prev" type="button" data-bs-target="#user-carousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#user-carousel" data-bs-slide="next" id="nextButton">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
         </div>
-        <div class="carousel-item<?= $index === 0 ? ' active' : '' ?>">
-            <div class="row">
-                <?php endif; ?>
-        <?php endforeach; ?>
-    </div>
-        </div>
-        </div>
-        <!-- Carousel Controls -->
-        <button class="carousel-control-prev" type="button" data-bs-target="#user-carousel" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Previous</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#user-carousel" data-bs-slide="next" id="nextButton">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Next</span>
-        </button>
-    </div>
     </div>
 
-
-
+    <!-- Body Content -->
     <div class="body-content">
-
         <div class="row">
+            <!-- Recent added User -->
             <div class="col-lg-4 mb-3">
                 <h2>Recent added User</h2>
-
                 <p>
                 <ul>
                     <?php foreach ($users as $user) : ?>
                         <li style="display: flex; align-items: center; margin-bottom: 10px;">
                             <?php
+                            // Display recent added user with profile image and name
                             $profilePage = ProfilePage::find()->where(['id' => $user['id']])->one();
-                            $basePath = 'imagesUpload/';
-                            $imagePath = $basePath . ($profilePage ? $profilePage->profile_id : '');
 
-                            $imageFormats = ['jpg', 'png']; // Unterstützte Bildformate
-
-                            $imageFound = false;
-                            foreach ($imageFormats as $format) {
-                                $fullImagePath = $imagePath . '.' . $format;
-                                if (file_exists($fullImagePath)) {
-                                    $imageFound = true;
-                                    $imageExtension = $format;
-                                    break;
-                                }
-                            }
-
-                            if ($profilePage && $imageFound) {
-                                // Bild gefunden, zeige es an
-                                echo Html::a(
-                                 Html::img(
-                                    $imagePath . '.' . $imageExtension,
-                                    [
-                                        'style' => 'max-width: 25px; max-height: 25px; margin-right: 10px; border-radius:50%;'
-                                    ]
-                                 ),
-                                ['profile/view', 'profile_id' => $profilePage->profile_id]
-                );
-                            } else {
-                                // Kein Bild gefunden oder Profil nicht vorhanden, zeige ein Platzhalterbild an
+                            if ($profilePage) {
+                                $profileImage = $profilePage->getProfileImage();
+                                $profileId = $profilePage->profile_id ?? null;
                                 echo Html::a(
                                     Html::img(
-                                    'imagesUpload/platzhalter.png',
-                                    [
-                                        'alt' => 'Platzhalterbild',
-                                        'style' => 'max-width: 25px; max-height: 25px; margin-right: 10px;'
-                                    ]
+                                        $profileImage,
+                                        [
+                                            'style' => 'max-width: 25px; max-height: 25px; margin-right: 10px; border-radius:50%;'
+                                        ]
                                     ),
-                                    ['profile/view', 'profile_id' => $profilePage->profile_id]
+                                    ['profile/view', 'profile_id' => $profileId]
                                 );
                             }
 
-                            // Zeige den Namen des Benutzers als Link zur Profilseite
                             if ($profilePage) {
-                                $profileId = $profilePage->profile_id;
                                 echo Html::a(
                                     Html::encode($user['name']),
-                                    ['profile/view', 'profile_id' => $profileId]
+                                    ['profile/view', 'profile_id' => $profileId],
+                                    ['style' => 'color: #58f2a9']
                                 );
                             } else {
                                 echo Html::encode($user['name']);
                             }
                             ?>
-
                         </li>
                     <?php endforeach; ?>
                 </ul>
                 </p>
-
-                <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/doc/">Yii Documentation &raquo;</a></p>
             </div>
+
+            <!-- Post something -->
             <div class="col-lg-4 mb-3">
                 <h2>Poste etwas</h2>
-
-                <p><?php
+                <p>
+                    <?php
                     $form = ActiveForm::begin([
                         'id' => 'post-form',
                         'options' => ['class'=>'form-horizontal'],
                         'enableClientValidation' => true,
                     ]);
-
-                    // Content input feld mit anzeige der zeichenanzahl
                     ?>
+                </p>
                 <div style="position:relative;">
-                    <?= Html::activeTextarea($postModel, 'content', ['class' => 'form-control', 'rows' => 6, 'maxlength' => 160]) ?>
+                    <?= $form->field($postModel, 'content')->textarea([
+                        'class' => 'form-control',
+                        'style' => 'background: #3f3f3f; color: #ccc',
+                        'rows' => 6,
+                        'maxlength' => 160
+                    ]) ?>
                     <span id="charCount" style="position:absolute; bottom:0; right:0;"></span>
                 </div>
-                <p></p>
+                <p>
                     <?php
-                    echo Html::submitButton('Post', ['class' => 'btn btn-primary']);
-
+                    echo Html::submitButton('Post', ['class' => 'btn btn-primary', 'style' => 'background: #48cf90']);
                     ActiveForm::end();
                     ?>
                 </p>
 
+                <!-- JavaScript for character count and login error modal -->
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
                         const contentField = document.getElementById('<?= Html::getInputId($postModel, 'content') ?>');
@@ -282,19 +202,19 @@ $this->registerJs("
 
                         contentField.addEventListener('input', function() {
                             charCount.textContent = `${this.value.length}/160`;
-                            // Ändere die Hintergrundfarbe, wenn die Hälfte der Zeichen erreicht ist
                             if (this.value.length >= 80) {
                                 charCount.style.color = 'darkorange';
                                 if (this.value.length >= 140) {
                                     charCount.style.color = 'red';
-                            }
+                                }
                             } else {
-                                charCount.style.color = ''; // Zurücksetzen auf Standard-Hintergrundfarbe
+                                charCount.style.color = '';
                             }
                         });
                     });
                 </script>
 
+                <!-- Login Error Modal -->
                 <div class="modal fade" id="loginErrorModal" tabindex="-1" aria-labelledby="loginErrorModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
@@ -311,77 +231,41 @@ $this->registerJs("
                         </div>
                     </div>
                 </div>
-
             </div>
-            <!--<div class="col-lg-4 mb-3">
-                <h2>Nach Usern suchen</h2>
 
-                <p><?php /* //TODO Suchleiste checken
-                    $form = ActiveForm::begin([
-                        'method' => 'post',
-                        'action' => ['site/index'],
-                    ]);
+            <!-- Post Success Modal -->
+            <div class="modal fade" id="postSuccessModal" tabindex="-1" aria-labelledby="postSuccessModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header" style="background-color: #3f3f3f; color: #ccc">
+                            <h5 class="modal-title" id="postSuccessModalLabel">Erfolgreich erstellt</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" style="background-color: #3f3f3f; color: #ccc">
+                            Ihr Post wurde erfolgreich erstellt.
+                        </div>
+                        <div class="modal-footer" style="background-color: #3f3f3f; color: #ccc">
+                            <button type="button" class="btn" style="background: #58f2a9" data-bs-dismiss="modal">Schließen</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                    echo $form->field($searchModel, 'name')->textInput(['placeholder' => 'Search'])->label(false);
-                    echo Html::submitButton('Search', ['class' => 'btn btn-primary']); // Hinzufügen des Submit-Buttons
-                    ActiveForm::end();
-                    */?>
-                </p>
-
-                <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/forum/">Yii Forum &raquo;</a></p>
-            </div> !-->
+            <!-- User Visits Chart -->
             <div class="col-lg-4">
                 <h2>Besuche nach Benutzern</h2>
-
                 <p>
-                    <!-- Beispiel-HTML für die Anzeige des Charts -->
+                    <!-- Example HTML to display the chart -->
                     <canvas id="userVisitsChart" width="400" height="400"></canvas>
 
+                    <!-- Include Chart.js library -->
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
-                    <?php $this->registerJsFile('userChart.js', ['depends' => [\yii\web\JqueryAsset::class]]); ?>
-
-                </p>
-
+                    <?php try {
+                        $this->registerJsFile('userChart.js', ['depends' => [JqueryAsset::class]]);
+                    } catch (InvalidConfigException $e) {
+                    } ?>
                 </p>
             </div>
         </div>
     </div>
-        <script>
-            document.getElementById('nextButton').addEventListener('click', function () {
-                let carousel = new bootstrap.Carousel(document.getElementById('user-carousel'));
-                carousel.next();
-            });
-
-
-
-            const parentContainer = document.getElementById('parentContainer');
-            const blurryBackground = document.getElementById('blurryBackground');
-
-            // Event Listener hinzufügen, um die Maus zu überwachen
-            parentContainer.addEventListener('mouseenter', () => {
-                document.addEventListener('mousemove', onMouseMove);
-            });
-
-            // Event Listener, um das Bewegen des Bildes zu stoppen, wenn die Maus den Container verlässt
-            parentContainer.addEventListener('mouseleave', () => {
-                document.removeEventListener('mousemove', onMouseMove);
-                resetBackgroundPosition();
-            });
-
-            // Funktion zum Bewegen des Hintergrundbildes relativ zur Mausposition
-            function onMouseMove(event) {
-                console.log('Mouse moved');
-                const xPos = event.clientX / window.innerWidth;
-                const yPos = event.clientY / window.innerHeight;
-
-                blurryBackground.style.backgroundPositionX = `${xPos * 25}%`;
-                blurryBackground.style.backgroundPositionY = `${yPos * 5}%`;
-            }
-            // Funktion zum Zurücksetzen der Hintergrundbildposition
-            function resetBackgroundPosition() {
-                parentContainer.style.backgroundPositionX = 'initial';
-                parentContainer.style.backgroundPositionY = 'initial';
-            }
-
-        </script>
 </div>

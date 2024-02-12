@@ -67,5 +67,23 @@ class ProfilePage extends ActiveRecord
         return 'imagesUpload/';
     }
 
+    public function getProfileImage()
+    {
+        $basePath = 'imagesUpload/';
+        $imagePath = $basePath . ($this->profile_id ?? '');
+        $imageFormats = ['jpg', 'png'];
+
+        foreach ($imageFormats as $format)
+        {
+            $fullImagePath = $imagePath . '.' . $format;
+            if(file_exists($fullImagePath))
+            {
+                return $imagePath . '.' . $format;
+            }
+        }
+        return 'imagesUpload/platzhalter.png';
+    }
+
+
 
 }
